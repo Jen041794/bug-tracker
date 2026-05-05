@@ -27,14 +27,17 @@
 - [x] 狀態流轉：Open → In Progress → Closed
 - [x] 列表篩選（依 status / severity）
 - [x] 健康檢查 endpoint（含資料庫連線驗證）
+- [x] 前端介面：列表頁、詳情頁、新增 / 編輯表單（共用元件）
+- [x] axios 串接後端 API（含 loading / error / 404 友善處理）
+- [x] 客戶端表單驗證 + 後端驗證錯誤回顯
+- [x] 環境變數設定（前後端 `.env` 分離，有 `.env.example` 範本）
 
 **規劃中 🛠**
 
-- [ ] 前端介面（列表頁 / 詳情頁 / 新增編輯表單）
-- [ ] axios 串接後端 API
 - [ ] Jest + Supertest API 自動化測試
 - [ ] Cypress E2E 自動化測試
-- [ ] 部署上線
+- [ ] 部署上線（Vercel + Render）
+- [ ] 一分鐘 Demo 影片
 
 ## 📡 API Endpoints
 
@@ -103,7 +106,30 @@ npm run dev
 
 ### 前端
 
-（前端尚未實作，待 Week 2 完成後補上）
+```bash
+# 1. 進入前端資料夾
+cd frontend
+
+# 2. 安裝套件
+npm install
+
+# 3. 複製環境變數範本（預設指向 http://localhost:3000）
+cp .env.example .env
+
+# 4. 啟動開發伺服器
+npm run dev
+```
+
+瀏覽器開 `http://localhost:5173`，應該看到 Bug 列表頁。
+
+> ⚠️ 啟動順序：**先啟後端再啟前端**。前端會打 `VITE_API_URL`，若後端沒啟前端會顯示「載入失敗」（這是預期行為，不是 bug）。
+
+### 同時跑前後端（推薦開兩個終端機）
+
+| 終端 | 資料夾 | 指令 | Port |
+|------|--------|------|------|
+| 1 | `backend/` | `npm run dev` | 3000 |
+| 2 | `frontend/` | `npm run dev` | 5173 |
 
 ## 🧪 自動化測試
 
