@@ -1,11 +1,12 @@
 import { Routes, Route, NavLink, Link } from 'react-router-dom';
+import { ToastProvider } from './context/ToastContext';
 import BugListPage from './pages/BugListPage';
 import BugDetailPage from './pages/BugDetailPage';
 import BugFormPage from './pages/BugFormPage';
 
 function App() {
   return (
-    <>
+    <ToastProvider>
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div className="container">
           <Link to="/" className="navbar-brand">
@@ -42,7 +43,7 @@ function App() {
           />
         </Routes>
       </main>
-    </>
+    </ToastProvider>
   );
 }
 

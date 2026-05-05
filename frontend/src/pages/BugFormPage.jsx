@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../lib/api';
+import { useToast } from '../context/ToastContext';
 import { SEVERITY_META, STATUS_META } from '../utils/badges';
 
 const EMPTY_FORM = {
@@ -15,6 +16,7 @@ const EMPTY_FORM = {
 function BugFormPage({ mode }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const isEdit = mode === 'edit';
 
   const [form, setForm] = useState(EMPTY_FORM);
@@ -111,8 +113,10 @@ function BugFormPage({ mode }) {
     try {
       if (isEdit) {
         await api.patch(`/api/bugs/${id}`, payload);
+        showToast('Bug 已更新', 'success');
       } else {
         await api.post('/api/bugs', payload);
+        showToast('Bug 已新增', 'success');
       }
       navigate('/');
     } catch (err) {

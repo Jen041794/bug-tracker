@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import { useToast } from '../context/ToastContext';
 import { SEVERITY_META, STATUS_META, formatDateTime } from '../utils/badges';
 
 function BugDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [bug, setBug] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,9 +50,10 @@ function BugDetailPage() {
     setDeleting(true);
     try {
       await api.delete(`/api/bugs/${id}`);
+      showToast('Bug 已刪除', 'success');
       navigate('/');
     } catch (err) {
-      alert(`刪除失敗:${err.message || '未知錯誤'}`);
+      showToast(`刪除失敗：${err.message || '未知錯誤'}`, 'error');
       setDeleting(false);
     }
   };

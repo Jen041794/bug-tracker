@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { SEVERITY_META, STATUS_META, formatDateTime } from '../utils/badges';
 
 function BugListPage() {
+  const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState('');
   const [filterSeverity, setFilterSeverity] = useState('');
 
@@ -156,19 +157,18 @@ function BugListPage() {
                     const sev = SEVERITY_META[bug.severity];
                     const stat = STATUS_META[bug.status];
                     return (
-                      <tr key={bug.id}>
+                      <tr
+                        key={bug.id}
+                        onClick={() => navigate(`/bugs/${bug.id}`)}
+                        style={{ cursor: 'pointer' }}
+                      >
                         <td>
                           <span className={`badge bg-${sev.color}`}>
                             {sev.label}
                           </span>
                         </td>
                         <td>
-                          <Link
-                            to={`/bugs/${bug.id}`}
-                            className="text-decoration-none"
-                          >
-                            {bug.title}
-                          </Link>
+                          <span className="fw-medium">{bug.title}</span>
                         </td>
                         <td>
                           <span className={`badge bg-${stat.color}`}>
