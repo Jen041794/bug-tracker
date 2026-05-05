@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import mockBugs from '../data/mockBugs';
+import api from '../lib/api';
 import { SEVERITY_META, STATUS_META } from '../utils/badges';
 
 const EMPTY_FORM = {
@@ -15,37 +15,54 @@ const EMPTY_FORM = {
 function BugFormPage({ mode }) {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const isEdit = mode === 'edit';
-  const existingBug = isEdit ? mockBugs.find((b) => b.id === id) : null;
 
-  const initialForm = existingBug
-    ? {
-        title: existingBug.title,
-        description: existingBug.description ?? '',
-        severity: existingBug.severity,
-        status: existingBug.status,
-        reporter: existingBug.reporter,
-        assignee: existingBug.assignee ?? '',
-      }
-    : EMPTY_FORM;
-
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(isEdit);
+  const [notFound, setNotFound] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [serverErrors, setServerErrors] = useState([]);
 
-  if (isEdit && !existingBug) {
-    return (
-      <div className="alert alert-warning">
-        <h2 className="h5">找不到這個 Bug</h2>
-        <p className="mb-2">
-          ID <code>{id}</code> 對應不到任何資料。
-        </p>
-        <Link to="/" className="btn btn-sm btn-outline-secondary">
-          ← 回 Bug 列表
-        </Link>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!isEdit) return;
+
+    let cancelled = false;
+    setLoading(true);
+    setFetchError(null);
+    setNotFound(false);
+
+    api
+      .get(`/api/bugs/${id}`)
+      .then((res) => {
+        if (cancelled) return;
+        const bug = res.data;
+        setForm({
+          title: bug.title,
+          description: bug.description ?? '',
+          severity: bug.severity,
+          status: bug.status,
+          reporter: bug.reporter,
+          assignee: bug.assignee ?? '',
+        });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (err.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          setFetchError(err.message || '載入失敗');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isEdit]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -71,8 +88,10 @@ function BugFormPage({ mode }) {
     return next;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setServerErrors([]);
+
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -80,19 +99,65 @@ function BugFormPage({ mode }) {
     }
 
     const payload = {
-      ...form,
-      description: form.description.trim() || null,
-      assignee: form.assignee.trim() || null,
       title: form.title.trim(),
+      description: form.description.trim() || null,
+      severity: form.severity,
+      status: form.status,
       reporter: form.reporter.trim(),
+      assignee: form.assignee.trim() || null,
     };
 
-    console.log(`[${isEdit ? 'PATCH' : 'POST'}] payload:`, payload);
-    alert(
-      `${isEdit ? '編輯' : '新增'}成功(模擬)\nDay 9 才會真的存到 DB,目前先 console.log。`,
-    );
-    navigate('/');
+    setSubmitting(true);
+    try {
+      if (isEdit) {
+        await api.patch(`/api/bugs/${id}`, payload);
+      } else {
+        await api.post('/api/bugs', payload);
+      }
+      navigate('/');
+    } catch (err) {
+      const data = err.response?.data;
+      if (data?.errors && Array.isArray(data.errors)) {
+        setServerErrors(data.errors);
+      } else {
+        setServerErrors([err.message || '送出失敗']);
+      }
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="text-center text-muted my-5">
+        <div className="spinner-border text-secondary" role="status">
+          <span className="visually-hidden">載入中...</span>
+        </div>
+        <div className="mt-2 small">載入中...</div>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="alert alert-warning">
+        <h2 className="h5">找不到這個 Bug</h2>
+        <p className="mb-2">
+          ID <code>{id}</code> 對應不到任何資料。
+        </p>
+        <Link to="/" className="btn btn-sm btn-outline-secondary">
+          ← 回 Bug 列表
+        </Link>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="alert alert-danger">
+        <strong>載入失敗</strong> — {fetchError}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -105,6 +170,17 @@ function BugFormPage({ mode }) {
       <div className="card shadow-sm">
         <div className="card-body">
           <h1 className="h3 mb-4">{isEdit ? '編輯 Bug' : '新增 Bug'}</h1>
+
+          {serverErrors.length > 0 && (
+            <div className="alert alert-danger">
+              <strong>送出失敗</strong>
+              <ul className="mb-0 mt-1">
+                {serverErrors.map((msg, i) => (
+                  <li key={i}>{msg}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} noValidate>
             <div className="mb-3">
@@ -119,6 +195,7 @@ function BugFormPage({ mode }) {
                 value={form.title}
                 onChange={handleChange}
                 maxLength={200}
+                disabled={submitting}
               />
               {errors.title && (
                 <div className="invalid-feedback">{errors.title}</div>
@@ -139,6 +216,7 @@ function BugFormPage({ mode }) {
                 rows={4}
                 value={form.description}
                 onChange={handleChange}
+                disabled={submitting}
               />
             </div>
 
@@ -153,6 +231,7 @@ function BugFormPage({ mode }) {
                   className={`form-select ${errors.severity ? 'is-invalid' : ''}`}
                   value={form.severity}
                   onChange={handleChange}
+                  disabled={submitting}
                 >
                   <option value="">— 請選擇 —</option>
                   {Object.entries(SEVERITY_META).map(([key, meta]) => (
@@ -176,6 +255,7 @@ function BugFormPage({ mode }) {
                   className="form-select"
                   value={form.status}
                   onChange={handleChange}
+                  disabled={submitting}
                 >
                   {Object.entries(STATUS_META).map(([key, meta]) => (
                     <option key={key} value={key}>
@@ -198,6 +278,7 @@ function BugFormPage({ mode }) {
                   className={`form-control ${errors.reporter ? 'is-invalid' : ''}`}
                   value={form.reporter}
                   onChange={handleChange}
+                  disabled={submitting}
                 />
                 {errors.reporter && (
                   <div className="invalid-feedback">{errors.reporter}</div>
@@ -216,18 +297,26 @@ function BugFormPage({ mode }) {
                   value={form.assignee}
                   onChange={handleChange}
                   placeholder="留空 = 未指派"
+                  disabled={submitting}
                 />
               </div>
             </div>
 
             <div className="d-flex gap-2 mt-4">
-              <button type="submit" className="btn btn-primary">
-                {isEdit ? '儲存變更' : '新增 Bug'}
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={submitting}
+              >
+                {submitting
+                  ? isEdit ? '儲存中...' : '新增中...'
+                  : isEdit ? '儲存變更' : '新增 Bug'}
               </button>
               <button
                 type="button"
                 className="btn btn-outline-secondary"
                 onClick={() => navigate('/')}
+                disabled={submitting}
               >
                 取消
               </button>

@@ -1,13 +1,72 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import mockBugs from '../data/mockBugs';
+import api from '../lib/api';
 import { SEVERITY_META, STATUS_META, formatDateTime } from '../utils/badges';
 
 function BugDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const bug = mockBugs.find((b) => b.id === id);
 
-  if (!bug) {
+  const [bug, setBug] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setNotFound(false);
+
+    api
+      .get(`/api/bugs/${id}`)
+      .then((res) => {
+        if (!cancelled) setBug(res.data);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (err.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          setError(err.message || '載入失敗');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const handleDelete = async () => {
+    if (!window.confirm(`確定要刪除這個 Bug 嗎?\n\n「${bug.title}」`)) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await api.delete(`/api/bugs/${id}`);
+      navigate('/');
+    } catch (err) {
+      alert(`刪除失敗:${err.message || '未知錯誤'}`);
+      setDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center text-muted my-5">
+        <div className="spinner-border text-secondary" role="status">
+          <span className="visually-hidden">載入中...</span>
+        </div>
+        <div className="mt-2 small">載入中...</div>
+      </div>
+    );
+  }
+
+  if (notFound) {
     return (
       <div className="alert alert-warning">
         <h2 className="h5">找不到這個 Bug</h2>
@@ -21,17 +80,19 @@ function BugDetailPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="alert alert-danger">
+        <strong>載入失敗</strong> — {error}
+        <div className="small mt-1 text-muted">
+          請確認後端 server 是否啟動。
+        </div>
+      </div>
+    );
+  }
+
   const sev = SEVERITY_META[bug.severity];
   const stat = STATUS_META[bug.status];
-
-  const handleDelete = () => {
-    if (!window.confirm(`確定要刪除這個 Bug 嗎?\n\n「${bug.title}」`)) {
-      return;
-    }
-    console.log('[DELETE] bug id:', bug.id);
-    alert('刪除成功(模擬)\nDay 9 才會真的呼叫 DELETE API,目前先 console.log。');
-    navigate('/');
-  };
 
   return (
     <div>
@@ -83,8 +144,9 @@ function BugDetailPage() {
               type="button"
               className="btn btn-outline-danger"
               onClick={handleDelete}
+              disabled={deleting}
             >
-              🗑️ 刪除
+              {deleting ? '刪除中...' : '🗑️ 刪除'}
             </button>
           </div>
         </div>

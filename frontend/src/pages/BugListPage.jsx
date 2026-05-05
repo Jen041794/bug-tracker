@@ -1,17 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import mockBugs from '../data/mockBugs';
+import api from '../lib/api';
 import { SEVERITY_META, STATUS_META, formatDateTime } from '../utils/badges';
 
 function BugListPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterSeverity, setFilterSeverity] = useState('');
 
-  const filtered = mockBugs.filter((bug) => {
-    if (filterStatus && bug.status !== filterStatus) return false;
-    if (filterSeverity && bug.severity !== filterSeverity) return false;
-    return true;
-  });
+  const [bugs, setBugs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    const params = {};
+    if (filterStatus) params.status = filterStatus;
+    if (filterSeverity) params.severity = filterSeverity;
+
+    api
+      .get('/api/bugs', { params })
+      .then((res) => {
+        if (!cancelled) setBugs(res.data);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err.message || '載入失敗');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filterStatus, filterSeverity]);
 
   const handleReset = () => {
     setFilterStatus('');
@@ -82,69 +108,90 @@ function BugListPage() {
         </div>
       </div>
 
-      <div className="text-muted small mb-2">
-        {isFiltered
-          ? `共 ${mockBugs.length} 筆 / 篩選後 ${filtered.length} 筆`
-          : `共 ${mockBugs.length} 筆`}
-        （目前用假資料,Day 9 會接後端 API)
-      </div>
+      {loading && (
+        <div className="text-center text-muted my-5">
+          <div className="spinner-border text-secondary" role="status">
+            <span className="visually-hidden">載入中...</span>
+          </div>
+          <div className="mt-2 small">載入中...</div>
+        </div>
+      )}
 
-      {filtered.length === 0 ? (
-        <div className="alert alert-info">
-          沒有符合條件的 Bug。
+      {error && !loading && (
+        <div className="alert alert-danger">
+          <strong>載入失敗</strong> — {error}
+          <div className="small mt-1 text-muted">
+            請確認後端 server 是否在 {import.meta.env.VITE_API_URL} 啟動。
+          </div>
         </div>
-      ) : (
-        <div className="table-responsive">
-          <table className="table table-hover align-middle bg-white">
-            <thead className="table-light">
-              <tr>
-                <th style={{ width: '90px' }}>嚴重度</th>
-                <th>標題</th>
-                <th style={{ width: '100px' }}>狀態</th>
-                <th style={{ width: '120px' }}>指派給</th>
-                <th style={{ width: '120px' }}>回報者</th>
-                <th style={{ width: '160px' }}>建立時間</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((bug) => {
-                const sev = SEVERITY_META[bug.severity];
-                const stat = STATUS_META[bug.status];
-                return (
-                  <tr key={bug.id}>
-                    <td>
-                      <span className={`badge bg-${sev.color}`}>
-                        {sev.label}
-                      </span>
-                    </td>
-                    <td>
-                      <Link
-                        to={`/bugs/${bug.id}`}
-                        className="text-decoration-none"
-                      >
-                        {bug.title}
-                      </Link>
-                    </td>
-                    <td>
-                      <span className={`badge bg-${stat.color}`}>
-                        {stat.label}
-                      </span>
-                    </td>
-                    <td>
-                      {bug.assignee || (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
-                    <td>{bug.reporter}</td>
-                    <td className="text-muted small">
-                      {formatDateTime(bug.createdAt)}
-                    </td>
+      )}
+
+      {!loading && !error && (
+        <>
+          <div className="text-muted small mb-2">
+            {isFiltered ? `共篩選出 ${bugs.length} 筆` : `共 ${bugs.length} 筆`}
+          </div>
+
+          {bugs.length === 0 ? (
+            <div className="alert alert-info">
+              {isFiltered
+                ? '沒有符合條件的 Bug。'
+                : '目前沒有任何 Bug — 點右上角「+ 新增 Bug」開始。'}
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-hover align-middle bg-white">
+                <thead className="table-light">
+                  <tr>
+                    <th style={{ width: '90px' }}>嚴重度</th>
+                    <th>標題</th>
+                    <th style={{ width: '100px' }}>狀態</th>
+                    <th style={{ width: '120px' }}>指派給</th>
+                    <th style={{ width: '120px' }}>回報者</th>
+                    <th style={{ width: '160px' }}>建立時間</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {bugs.map((bug) => {
+                    const sev = SEVERITY_META[bug.severity];
+                    const stat = STATUS_META[bug.status];
+                    return (
+                      <tr key={bug.id}>
+                        <td>
+                          <span className={`badge bg-${sev.color}`}>
+                            {sev.label}
+                          </span>
+                        </td>
+                        <td>
+                          <Link
+                            to={`/bugs/${bug.id}`}
+                            className="text-decoration-none"
+                          >
+                            {bug.title}
+                          </Link>
+                        </td>
+                        <td>
+                          <span className={`badge bg-${stat.color}`}>
+                            {stat.label}
+                          </span>
+                        </td>
+                        <td>
+                          {bug.assignee || (
+                            <span className="text-muted">—</span>
+                          )}
+                        </td>
+                        <td>{bug.reporter}</td>
+                        <td className="text-muted small">
+                          {formatDateTime(bug.createdAt)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
