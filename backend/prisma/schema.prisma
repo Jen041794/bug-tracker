@@ -1,0 +1,37 @@
+// Prisma schema — Bug Tracker
+// 文件：https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Severity {
+  CRITICAL
+  MAJOR
+  MINOR
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+model Bug {
+  id          String   @id @default(uuid())
+  title       String   @db.VarChar(200)
+  description String?  @db.Text
+  severity    Severity
+  status      Status   @default(OPEN)
+  assignee    String?  @db.VarChar(100)
+  reporter    String   @db.VarChar(100)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("bugs")
+}
