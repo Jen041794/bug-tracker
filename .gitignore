@@ -1,0 +1,71 @@
+# ============================================
+# Bug Tracker .gitignore 範本
+# Day 1 用法：把這個檔案內容複製到 bug-tracker/.gitignore
+# 或直接重新命名為 .gitignore 放到專案根目錄
+# ============================================
+
+# === Dependencies（裝套件產生的，超大不能推）===
+node_modules/
+.pnp
+.pnp.js
+
+# === Environment Variables（有密碼、API key，外洩很慘）===
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# === Build Output（自動產生的，不需要進版控）===
+dist/
+build/
+out/
+.next/
+.vite/
+
+# === Logs ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# === IDE / Editor ===
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS（系統自動產生的雜檔）===
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# === Testing / Coverage ===
+coverage/
+.nyc_output/
+*.lcov
+
+# === Cypress（錄影、截圖、下載檔）===
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# === Vite ===
+*.local
+
+# === Prisma（本地 SQLite，PostgreSQL 用不到但先擋著）===
+prisma/dev.db
+prisma/dev.db-journal
+
+# === Misc ===
+.cache/
+.tmp/
+.parcel-cache/
+.eslintcache
