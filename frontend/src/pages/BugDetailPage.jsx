@@ -1,9 +1,10 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import mockBugs from '../data/mockBugs';
 import { SEVERITY_META, STATUS_META, formatDateTime } from '../utils/badges';
 
 function BugDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const bug = mockBugs.find((b) => b.id === id);
 
   if (!bug) {
@@ -22,6 +23,15 @@ function BugDetailPage() {
 
   const sev = SEVERITY_META[bug.severity];
   const stat = STATUS_META[bug.status];
+
+  const handleDelete = () => {
+    if (!window.confirm(`確定要刪除這個 Bug 嗎?\n\n「${bug.title}」`)) {
+      return;
+    }
+    console.log('[DELETE] bug id:', bug.id);
+    alert('刪除成功(模擬)\nDay 9 才會真的呼叫 DELETE API,目前先 console.log。');
+    navigate('/');
+  };
 
   return (
     <div>
@@ -66,19 +76,15 @@ function BugDetailPage() {
           </dl>
 
           <div className="d-flex gap-2">
-            <Link
-              to={`/bugs/${bug.id}/edit`}
-              className="btn btn-primary"
-            >
+            <Link to={`/bugs/${bug.id}/edit`} className="btn btn-primary">
               ✏️ 編輯
             </Link>
             <button
               type="button"
               className="btn btn-outline-danger"
-              disabled
-              title="Day 8 才會啟用"
+              onClick={handleDelete}
             >
-              🗑️ 刪除（Day 8 啟用)
+              🗑️ 刪除
             </button>
           </div>
         </div>
