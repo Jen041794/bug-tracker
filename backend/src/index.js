@@ -2,10 +2,10 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('./lib/prisma');
+const bugsRouter = require('./routes/bugs');
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -28,7 +28,10 @@ app.get('/health', async (req, res) => {
   }
 });
 
+app.use('/api/bugs', bugsRouter);
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`   Health check: http://localhost:${PORT}/health`);
+  console.log(`   Bugs API:     http://localhost:${PORT}/api/bugs`);
 });
