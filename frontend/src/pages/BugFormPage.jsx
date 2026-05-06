@@ -6,12 +6,43 @@ import { SEVERITY_META, STATUS_META } from '../utils/badges';
 
 const EMPTY_FORM = {
   title: '',
-  description: '',
+  actual: '',
+  expected: '',
   severity: '',
   status: 'OPEN',
   reporter: '',
   assignee: '',
 };
+
+const ACTUAL_MARK = '【問題現況】';
+const EXPECTED_MARK = '【預期情況】';
+
+function parseDescription(description) {
+  if (!description) return { actual: '', expected: '' };
+  const actualIdx = description.indexOf(ACTUAL_MARK);
+  const expectedIdx = description.indexOf(EXPECTED_MARK);
+  if (actualIdx < 0 && expectedIdx < 0) {
+    return { actual: description, expected: '' };
+  }
+  let actual = '';
+  let expected = '';
+  if (actualIdx >= 0) {
+    const start = actualIdx + ACTUAL_MARK.length;
+    const end = expectedIdx > actualIdx ? expectedIdx : description.length;
+    actual = description.slice(start, end).trim();
+  }
+  if (expectedIdx >= 0) {
+    expected = description.slice(expectedIdx + EXPECTED_MARK.length).trim();
+  }
+  return { actual, expected };
+}
+
+function composeDescription(actual, expected) {
+  const parts = [];
+  if (actual.trim()) parts.push(`${ACTUAL_MARK}\n${actual.trim()}`);
+  if (expected.trim()) parts.push(`${EXPECTED_MARK}\n${expected.trim()}`);
+  return parts.length > 0 ? parts.join('\n\n') : null;
+}
 
 function BugFormPage({ mode }) {
   const { id } = useParams();
@@ -40,9 +71,11 @@ function BugFormPage({ mode }) {
       .then((res) => {
         if (cancelled) return;
         const bug = res.data;
+        const { actual, expected } = parseDescription(bug.description);
         setForm({
           title: bug.title,
-          description: bug.description ?? '',
+          actual,
+          expected,
           severity: bug.severity,
           status: bug.status,
           reporter: bug.reporter,
@@ -102,7 +135,7 @@ function BugFormPage({ mode }) {
 
     const payload = {
       title: form.title.trim(),
-      description: form.description.trim() || null,
+      description: composeDescription(form.actual, form.expected),
       severity: form.severity,
       status: form.status,
       reporter: form.reporter.trim(),
@@ -210,16 +243,33 @@ function BugFormPage({ mode }) {
             </div>
 
             <div className="mb-3">
-              <label htmlFor="description" className="form-label">
-                描述
+              <label htmlFor="actual" className="form-label">
+                問題現況
               </label>
               <textarea
-                id="description"
-                name="description"
+                id="actual"
+                name="actual"
                 className="form-control"
                 rows={4}
-                value={form.description}
+                value={form.actual}
                 onChange={handleChange}
+                placeholder="實際發生的情形、操作步驟、錯誤訊息等"
+                disabled={submitting}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="expected" className="form-label">
+                預期情況
+              </label>
+              <textarea
+                id="expected"
+                name="expected"
+                className="form-control"
+                rows={4}
+                value={form.expected}
+                onChange={handleChange}
+                placeholder="原本應該要看到的結果或行為"
                 disabled={submitting}
               />
             </div>

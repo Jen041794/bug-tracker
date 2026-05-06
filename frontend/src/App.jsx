@@ -18,11 +18,6 @@ function App() {
                 Bug 列表
               </NavLink>
             </li>
-            <li className="nav-item">
-              <NavLink to="/bugs/new" className="nav-link">
-                新增 Bug
-              </NavLink>
-            </li>
           </ul>
         </div>
       </nav>
