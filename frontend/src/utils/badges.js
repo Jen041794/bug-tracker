@@ -3,15 +3,15 @@
 // Day 8/9 接表單和 API 時也會用同一份。
 
 export const SEVERITY_META = {
-  CRITICAL: { color: 'danger', label: '危急' },
-  MAJOR: { color: 'warning', label: '主要' },
-  MINOR: { color: 'success', label: '次要' },
+  CRITICAL: { color: 'danger', label: '緊急' },
+  MAJOR: { color: 'orange', label: '一般' },
+  MINOR: { color: 'success', label: '低' },
 };
 
 export const STATUS_META = {
-  OPEN: { color: 'primary', label: '未處理' },
-  IN_PROGRESS: { color: 'info', label: '處理中' },
-  CLOSED: { color: 'secondary', label: '已關閉' },
+  OPEN: { color: 'secondary', label: '待處理' },
+  IN_PROGRESS: { color: 'primary', label: '處理中' },
+  CLOSED: { color: 'success', label: '已關閉' },
 };
 
 export function formatDateTime(iso) {
