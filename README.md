@@ -33,10 +33,10 @@
 - [x] 客戶端表單驗證 + 後端驗證錯誤回顯
 - [x] 環境變數設定（前後端 `.env` 分離，有 `.env.example` 範本）
 - [x] 部署上線（Vercel + Render，CORS 白名單已鎖）
+- [x] Jest + Supertest API 自動化測試（7 個案例蓋健康檢查 + CRUD + 必填驗證 + 404）
 
 **規劃中 🛠**
 
-- [ ] Jest + Supertest API 自動化測試
 - [ ] Cypress E2E 自動化測試
 - [ ] 一分鐘 Demo 影片
 - [ ] 圖片上傳（讓 Bug 報告可以附截圖）
@@ -135,7 +135,42 @@ npm run dev
 
 ## 🧪 自動化測試
 
-（待 Week 3 完成後補上 — 預計用 Jest + Supertest 測 API、Cypress 測關鍵 E2E 流程）
+後端 API 用 **Jest + Supertest** 跑整合測試，測試使用獨立的 `bug_tracker_test` 資料庫，跑前會清空 `bugs` 表，不會影響開發資料。
+
+### 第一次設定
+
+```bash
+cd backend
+
+# 1. 建測試 DB
+psql -U postgres -c "CREATE DATABASE bug_tracker_test;"
+
+# 2. 複製測試環境變數範本，把 YOUR_PASSWORD 換成自己的
+cp .env.test.example .env.test
+
+# 3. 套 schema 到測試 DB
+npm run test:setup
+```
+
+### 跑測試
+
+```bash
+cd backend
+npm test
+```
+
+預期 7 個案例全綠：
+
+| 模組 | 測什麼 |
+|---|---|
+| `GET /health` | 服務存活 + DB 連得到 |
+| `POST /api/bugs` | 必填欄位驗證 / 成功建立 |
+| `GET /api/bugs` | 列表載入 / 依 severity 篩選 |
+| `GET /api/bugs/:id` | 不存在的 id 回 404 |
+| `PATCH /api/bugs/:id` | 部分更新成功 |
+| `DELETE /api/bugs/:id` | 刪除後再查回 404 |
+
+E2E 測試（Cypress）規劃在 Week 3 補上。
 
 ## 👤 作者
 

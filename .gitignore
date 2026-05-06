@@ -14,6 +14,7 @@ node_modules/
 .env.local
 .env.development
 .env.production
+.env.test
 .env.*.local
 
 # === Build Output（自動產生的，不需要進版控）===
