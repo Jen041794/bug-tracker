@@ -5,13 +5,13 @@
 export const SEVERITY_META = {
   CRITICAL: { color: 'danger', label: '危急' },
   MAJOR: { color: 'warning', label: '主要' },
-  MINOR: { color: 'secondary', label: '次要' },
+  MINOR: { color: 'success', label: '次要' },
 };
 
 export const STATUS_META = {
   OPEN: { color: 'primary', label: '未處理' },
-  IN_PROGRESS: { color: 'warning', label: '處理中' },
-  CLOSED: { color: 'success', label: '已關閉' },
+  IN_PROGRESS: { color: 'info', label: '處理中' },
+  CLOSED: { color: 'secondary', label: '已關閉' },
 };
 
 export function formatDateTime(iso) {
