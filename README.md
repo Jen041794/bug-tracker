@@ -23,21 +23,23 @@
 **已完成 ✅**
 
 - [x] Bug 的 CRUD：建立 / 查詢 / 更新 / 刪除
-- [x] 嚴重度分類：Critical / Major / Minor
-- [x] 狀態流轉：Open → In Progress → Closed
+- [x] 嚴重度分類：緊急 / 一般 / 低（Critical / Major / Minor）
+- [x] 狀態流轉：待處理 → 處理中 → 已關閉
 - [x] 列表篩選（依 status / severity）
 - [x] 健康檢查 endpoint（含資料庫連線驗證）
 - [x] 前端介面：列表頁、詳情頁、新增 / 編輯表單（共用元件）
+- [x] 表單描述拆「問題現況 / 預期情況」兩欄（QA 友善格式）
 - [x] axios 串接後端 API（含 loading / error / 404 友善處理）
 - [x] 客戶端表單驗證 + 後端驗證錯誤回顯
 - [x] 環境變數設定（前後端 `.env` 分離，有 `.env.example` 範本）
+- [x] 部署上線（Vercel + Render，CORS 白名單已鎖）
 
 **規劃中 🛠**
 
 - [ ] Jest + Supertest API 自動化測試
 - [ ] Cypress E2E 自動化測試
-- [ ] 部署上線（Vercel + Render）
 - [ ] 一分鐘 Demo 影片
+- [ ] 圖片上傳（讓 Bug 報告可以附截圖）
 
 ## 📡 API Endpoints
 
@@ -68,8 +70,8 @@
 
 ## 🚀 線上 Demo
 
-- 前端網址：（部署後填）
-- 後端 API：（部署後填）
+- 前端網址：https://bug-tracker-weld.vercel.app
+- 後端健康檢查：https://bug-tracker-api-obiu.onrender.com/health
 
 > ⚠️ 後端使用 Render 免費方案，閒置 15 分鐘會休眠。第一次喚醒約需 30 秒，請耐心等候。
 
