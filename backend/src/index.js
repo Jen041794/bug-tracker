@@ -8,7 +8,15 @@ const bugsRouter = require('./routes/bugs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((s) => s.trim())
+  : null;
+
+app.use(
+  cors({
+    origin: allowedOrigins ?? true,
+  })
+);
 app.use(express.json());
 
 app.get('/health', async (req, res) => {
