@@ -1,6 +1,1 @@
 /* App-specific overrides go here. Bootstrap handles base styles. */
-
-/* 補一個 Bootstrap 沒內建的橙色，給 MAJOR 嚴重度用 */
-.bg-orange {
-  background-color: #fd7e14 !important;
-}
