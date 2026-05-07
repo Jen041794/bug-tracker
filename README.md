@@ -34,10 +34,10 @@
 - [x] 環境變數設定（前後端 `.env` 分離，有 `.env.example` 範本）
 - [x] 部署上線（Vercel + Render，CORS 白名單已鎖）
 - [x] Jest + Supertest API 自動化測試（7 個案例蓋健康檢查 + CRUD + 必填驗證 + 404）
+- [x] Cypress E2E 自動化測試（3 個案例蓋建立 / 刪除 / 篩選 + 編輯狀態流程）
 
 **規劃中 🛠**
 
-- [ ] Cypress E2E 自動化測試
 - [ ] 一分鐘 Demo 影片
 - [ ] 圖片上傳（讓 Bug 報告可以附截圖）
 
@@ -74,6 +74,32 @@
 - 後端健康檢查：https://bug-tracker-api-obiu.onrender.com/health
 
 > ⚠️ 後端使用 Render 免費方案，閒置 15 分鐘會休眠。第一次喚醒約需 30 秒，請耐心等候。
+
+## 🎬 Demo 影片
+
+_coming soon — 1 分鐘走過列表 / 新增 / 詳情 / 編輯狀態 / 刪除完整流程_
+
+## 📁 專案結構
+
+```
+bug-tracker/
+├── backend/         Express + Prisma + PostgreSQL
+│   ├── src/
+│   │   ├── app.js     Express app（給 Jest 用）
+│   │   ├── index.js   啟動 server（dev / dev:e2e / start）
+│   │   ├── routes/    Bug CRUD endpoints
+│   │   └── lib/       共用 PrismaClient
+│   ├── prisma/        Schema + migrations
+│   ├── tests/         Jest + Supertest API 測試
+│   └── scripts/       測試 DB schema 套用工具
+├── frontend/        React + Vite + Bootstrap
+│   ├── src/
+│   │   ├── pages/     列表 / 詳情 / 表單頁
+│   │   ├── lib/       axios instance
+│   │   └── context/   Toast 通知
+│   └── cypress/       E2E 測試（spec + custom commands）
+└── README.md
+```
 
 ## 💻 本地啟動
 
@@ -170,7 +196,28 @@ npm test
 | `PATCH /api/bugs/:id` | 部分更新成功 |
 | `DELETE /api/bugs/:id` | 刪除後再查回 404 |
 
-E2E 測試（Cypress）規劃在 Week 3 補上。
+### E2E 測試（Cypress）
+
+E2E 測試用 **Cypress** 跑完整使用者流程，包含 UI 互動 + API 串接。後端會切到測試 DB（`bug_tracker_test`，跟 Jest 共用），不污染開發資料。
+
+#### 啟動三個終端機
+
+| 終端 | 資料夾 | 指令 | 用途 |
+|------|--------|------|------|
+| 1 | `backend/` | `npm run dev:e2e` | 後端啟動，連 `bug_tracker_test` |
+| 2 | `frontend/` | `npm run dev` | 前端 dev server |
+| 3 | `frontend/` | `npx cypress open` 或 `npx cypress run` | Cypress GUI / headless |
+
+#### 預期結果
+
+3 個案例全綠（headless 模式約 4 秒）：
+
+| Spec | 測什麼 |
+|---|---|
+| `create-bug.cy.js` | 列表 → 新增頁 → 填表 → 送出 → 列表能看到；種一筆 → 詳情頁 → 確認 → 刪除 → 列表消失 |
+| `filter-and-edit.cy.js` | 種兩筆不同 status → 篩選 OPEN → 進詳情 → 改成 IN_PROGRESS → 列表回看「處理中」 |
+
+> 💡 spec 全部用 `cy.intercept()` + `cy.wait('@alias')` 等 API 回應後再斷言，避開 Cypress 常見的 flaky 等待問題。
 
 ## 👤 作者
 
