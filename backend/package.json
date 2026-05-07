@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "nodemon src/index.js",
+    "dev:e2e": "cross-env NODE_ENV=test nodemon src/index.js",
     "start": "node src/index.js",
     "test": "cross-env NODE_ENV=test jest --runInBand",
     "test:setup": "node scripts/setup-test-db.js"

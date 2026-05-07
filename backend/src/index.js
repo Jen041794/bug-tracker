@@ -1,4 +1,7 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({
+  path: path.join(__dirname, '..', process.env.NODE_ENV === 'test' ? '.env.test' : '.env'),
+});
 
 const app = require('./app');
 
