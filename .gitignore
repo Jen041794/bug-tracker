@@ -70,3 +70,6 @@ prisma/dev.db-journal
 .tmp/
 .parcel-cache/
 .eslintcache
+
+# === Internal-only docs（個人錄製 SOP / 開發筆記，不公開）===
+demo-recording.md
