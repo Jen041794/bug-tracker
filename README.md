@@ -79,9 +79,9 @@
 
 ## 🎬 Demo 影片
 
-[![Bug Tracker Demo](./cover.png)](./demo.mp4)
+[![Bug Tracker Demo](./cover.png)](https://github.com/Jen041794/bug-tracker/releases/tag/v1.0.0)
 
-> 📺 **點擊封面圖播放**（或直接下載 [`demo.mp4`](./demo.mp4)）
+> 📺 **點擊封面圖前往 [v1.0.0 Release](https://github.com/Jen041794/bug-tracker/releases/tag/v1.0.0) 觀看 / 下載 demo 影片**
 >
 > 1 分鐘走過：列表 → 篩選 → 新增 → 編輯狀態 → 刪除 完整流程
 
