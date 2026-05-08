@@ -227,4 +227,4 @@ E2E 測試用 **Cypress** 跑完整使用者流程，包含 UI 互動 + API 串�
 
 ## 👤 作者
 
-小加（Michelle） — [GitHub @Jen041794](https://github.com/Jen041794)
+Michelle — [GitHub @Jen041794](https://github.com/Jen041794)
