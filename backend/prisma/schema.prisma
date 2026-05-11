@@ -23,15 +23,31 @@ enum Status {
 }
 
 model Bug {
-  id          String   @id @default(uuid())
-  title       String   @db.VarChar(200)
-  description String?  @db.Text
+  id          String       @id @default(uuid())
+  title       String       @db.VarChar(200)
+  description String?      @db.Text
   severity    Severity
-  status      Status   @default(OPEN)
-  assignee    String?  @db.VarChar(100)
-  reporter    String   @db.VarChar(100)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  status      Status       @default(OPEN)
+  assignee    String?      @db.VarChar(100)
+  reporter    String       @db.VarChar(100)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  attachments Attachment[]
 
   @@map("bugs")
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  bugId      String   @map("bug_id")
+  url        String   @db.Text
+  storageKey String   @map("storage_key") @db.Text
+  filename   String   @db.VarChar(255)
+  mimeType   String   @map("mime_type") @db.VarChar(100)
+  size       Int
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+  bug        Bug      @relation(fields: [bugId], references: [id], onDelete: Cascade)
+
+  @@index([bugId])
+  @@map("attachments")
 }

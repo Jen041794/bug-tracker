@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const prisma = require('./lib/prisma');
 const bugsRouter = require('./routes/bugs');
+const attachmentsRouters = require('./routes/attachments');
 
 const app = express();
 
@@ -34,5 +35,7 @@ app.get('/health', async (req, res) => {
 });
 
 app.use('/api/bugs', bugsRouter);
+app.use('/api/bugs/:bugId/attachments', attachmentsRouters.bugScoped);
+app.use('/api/attachments', attachmentsRouters.standalone);
 
 module.exports = app;

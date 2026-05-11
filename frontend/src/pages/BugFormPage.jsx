@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { SEVERITY_META, STATUS_META } from '../utils/badges';
+import AttachmentSection from '../components/AttachmentSection';
 
 const EMPTY_FORM = {
   title: '',
@@ -51,6 +52,7 @@ function BugFormPage({ mode }) {
   const isEdit = mode === 'edit';
 
   const [form, setForm] = useState(EMPTY_FORM);
+  const [attachments, setAttachments] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(isEdit);
   const [notFound, setNotFound] = useState(false);
@@ -81,6 +83,7 @@ function BugFormPage({ mode }) {
           reporter: bug.reporter,
           assignee: bug.assignee ?? '',
         });
+        setAttachments(bug.attachments || []);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -355,6 +358,18 @@ function BugFormPage({ mode }) {
                 />
               </div>
             </div>
+
+            {isEdit ? (
+              <AttachmentSection
+                bugId={id}
+                attachments={attachments}
+                onChange={setAttachments}
+              />
+            ) : (
+              <div className="form-text mt-3">
+                💡 Bug 建立後可在詳情頁加入截圖附件
+              </div>
+            )}
 
             <div className="d-flex gap-2 mt-4">
               <button

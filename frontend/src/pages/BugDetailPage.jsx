@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { SEVERITY_META, STATUS_META, formatDateTime } from '../utils/badges';
+import AttachmentSection from '../components/AttachmentSection';
 
 function BugDetailPage() {
   const { id } = useParams();
@@ -139,7 +140,13 @@ function BugDetailPage() {
             <dd className="col-sm-9">{formatDateTime(bug.updatedAt)}</dd>
           </dl>
 
-          <div className="d-flex gap-2">
+          <AttachmentSection
+            bugId={bug.id}
+            attachments={bug.attachments}
+            onChange={(next) => setBug({ ...bug, attachments: next })}
+          />
+
+          <div className="d-flex gap-2 mt-4">
             <Link to={`/bugs/${bug.id}/edit`} className="btn btn-primary">
               ✏️ 編輯
             </Link>

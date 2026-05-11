@@ -17,8 +17,9 @@
 | 前端 | React.js + Bootstrap + Vite |
 | 後端 | Node.js + Express + Prisma ORM |
 | 資料庫 | PostgreSQL |
+| 圖片儲存 | Supabase Storage |
 | 自動化測試 | Jest + Supertest（API）、Cypress（E2E） |
-| 部署 | Vercel（前端）+ Render（後端 + DB） |
+| 部署 | Vercel（前端）+ Render（後端 + DB）+ Supabase（圖片） |
 
 ## ✨ 主要功能
 
@@ -35,13 +36,14 @@
 - [x] 客戶端表單驗證 + 後端驗證錯誤回顯
 - [x] 環境變數設定（前後端 `.env` 分離，有 `.env.example` 範本）
 - [x] 部署上線（Vercel + Render，CORS 白名單已鎖）
-- [x] Jest + Supertest API 自動化測試（7 個案例蓋健康檢查 + CRUD + 必填驗證 + 404）
-- [x] Cypress E2E 自動化測試（3 個案例蓋建立 / 刪除 / 篩選 + 編輯狀態流程）
+- [x] 圖片附件：每筆 Bug 可附多張截圖（JPG / PNG / WebP / GIF，單檔 5MB），存到 Supabase Storage
+- [x] Jest + Supertest API 自動化測試（12 個案例蓋健康檢查 + CRUD + 附件上傳/刪除/cascade + 必填驗證 + 404）
+- [x] Cypress E2E 自動化測試（4 個案例蓋建立 / 刪除 / 篩選 / 編輯狀態 / 附件上傳流程）
 
 **規劃中 🛠**
 
 - [x] 一分鐘 Demo 影片
-- [ ] 圖片上傳（讓 Bug 報告可以附截圖）
+- [x] 圖片上傳（讓 Bug 報告可以附截圖）
 
 ## 📡 API Endpoints
 
@@ -52,7 +54,9 @@
 | `GET` | `/api/bugs/:id` | 取得單筆 Bug |
 | `POST` | `/api/bugs` | 建立新 Bug |
 | `PATCH` | `/api/bugs/:id` | 部分更新 Bug |
-| `DELETE` | `/api/bugs/:id` | 刪除 Bug |
+| `DELETE` | `/api/bugs/:id` | 刪除 Bug（含 cascade 刪 Supabase 上的所有附件） |
+| `POST` | `/api/bugs/:bugId/attachments` | 上傳圖片附件（multipart `file` 欄位，限 5MB） |
+| `DELETE` | `/api/attachments/:id` | 刪除單一附件（含 Supabase 上的檔案） |
 
 **Bug 資料模型：**
 
@@ -89,20 +93,21 @@
 
 ```
 bug-tracker/
-├── backend/         Express + Prisma + PostgreSQL
+├── backend/         Express + Prisma + PostgreSQL + Supabase
 │   ├── src/
 │   │   ├── app.js     Express app（給 Jest 用）
 │   │   ├── index.js   啟動 server（dev / dev:e2e / start）
-│   │   ├── routes/    Bug CRUD endpoints
-│   │   └── lib/       共用 PrismaClient
-│   ├── prisma/        Schema + migrations
-│   ├── tests/         Jest + Supertest API 測試
-│   └── scripts/       測試 DB schema 套用工具
+│   │   ├── routes/    Bug CRUD + attachments endpoints
+│   │   └── lib/       共用 PrismaClient + Supabase storage 包裝
+│   ├── prisma/        Schema + migrations（含 attachments 表）
+│   ├── tests/         Jest + Supertest API 測試（含 attachments mock）
+│   └── scripts/       測試 DB 套用 + 端對端煙霧測試
 ├── frontend/        React + Vite + Bootstrap
 │   ├── src/
-│   │   ├── pages/     列表 / 詳情 / 表單頁
-│   │   ├── lib/       axios instance
-│   │   └── context/   Toast 通知
+│   │   ├── pages/        列表 / 詳情 / 表單頁
+│   │   ├── components/   AttachmentSection（上傳/縮圖/刪除）
+│   │   ├── lib/          axios instance
+│   │   └── context/      Toast 通知
 │   └── cypress/       E2E 測試（spec + custom commands）
 └── README.md
 ```
@@ -136,6 +141,8 @@ npx prisma migrate dev
 npm run dev
 ```
 
+> 💡 圖片上傳功能需要額外設定 Supabase Storage（見下方「Supabase 設定」段落），不設也能跑核心 CRUD，只是上傳會 500。
+
 伺服器啟動後，開瀏覽器或 Thunder Client 訪問 `http://localhost:3000/health`，看到 `{"status":"ok","database":"connected"}` 即代表成功。
 
 ### 前端
@@ -165,6 +172,25 @@ npm run dev
 | 1 | `backend/` | `npm run dev` | 3000 |
 | 2 | `frontend/` | `npm run dev` | 5173 |
 
+### Supabase 設定（圖片附件用）
+
+圖片附件存在 Supabase Storage（免費 1GB），不設定也能跑核心 CRUD，只是上傳會回 500。設定步驟：
+
+1. 到 https://supabase.com 註冊（建議用 GitHub 登入），建一個新 Project（Region 選 `Southeast Asia (Singapore)` 跟 Render 同區）。
+2. 左 sidebar → **Storage** → New bucket → 名稱 `bug-attachments`、勾選 **Public bucket**。
+3. 左 sidebar → **Project Settings** → **API**：
+   - 複製 `Project URL`（形如 `https://xxxxx.supabase.co`）
+   - 在「Secret keys」區塊按 Reveal 複製 secret key（形如 `sb_secret_...`）
+4. 把 3 個值寫進 `backend/.env`：
+   ```
+   SUPABASE_URL="https://xxxxx.supabase.co"
+   SUPABASE_SECRET_KEY="sb_secret_xxxxx"
+   SUPABASE_BUCKET="bug-attachments"
+   ```
+5. 重啟後端 dev server。
+
+> ⚠️ Secret key 等同管理員權限，**不要 commit、不要分享**。`.env` 已在 `.gitignore` 裡。
+
 ## 🧪 自動化測試
 
 後端 API 用 **Jest + Supertest** 跑整合測試，測試使用獨立的 `bug_tracker_test` 資料庫，跑前會清空 `bugs` 表，不會影響開發資料。
@@ -191,7 +217,7 @@ cd backend
 npm test
 ```
 
-預期 7 個案例全綠：
+預期 12 個案例全綠：
 
 | 模組 | 測什麼 |
 |---|---|
@@ -201,6 +227,9 @@ npm test
 | `GET /api/bugs/:id` | 不存在的 id 回 404 |
 | `PATCH /api/bugs/:id` | 部分更新成功 |
 | `DELETE /api/bugs/:id` | 刪除後再查回 404 |
+| `POST /api/bugs/:id/attachments` | 上傳成功 / 不存在 bug 回 404 / 拒絕非圖片格式（Supabase mock 掉）|
+| `DELETE /api/attachments/:id` | 刪 DB + 呼叫 storage 刪檔 |
+| `DELETE /api/bugs/:id` | cascade 刪附件且呼叫 storage 批次刪檔 |
 
 ### E2E 測試（Cypress）
 
@@ -216,12 +245,13 @@ E2E 測試用 **Cypress** 跑完整使用者流程，包含 UI 互動 + API 串�
 
 #### 預期結果
 
-3 個案例全綠（headless 模式約 4 秒）：
+4 個案例全綠（headless 模式約 20 秒）：
 
 | Spec | 測什麼 |
 |---|---|
 | `create-bug.cy.js` | 列表 → 新增頁 → 填表 → 送出 → 列表能看到；種一筆 → 詳情頁 → 確認 → 刪除 → 列表消失 |
 | `filter-and-edit.cy.js` | 種兩筆不同 status → 篩選 OPEN → 進詳情 → 改成 IN_PROGRESS → 列表回看「處理中」 |
+| `attachments.cy.js` | 詳情頁上傳一張圖 → 縮圖出現 → 刪除 → 縮圖消失（用 `cy.intercept` 擋掉真實 Supabase 請求） |
 
 > 💡 spec 全部用 `cy.intercept()` + `cy.wait('@alias')` 等 API 回應後再斷言，避開 Cypress 常見的 flaky 等待問題。
 

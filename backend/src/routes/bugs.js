@@ -1,5 +1,6 @@
 const express = require('express');
 const prisma = require('../lib/prisma');
+const storage = require('../lib/storage');
 
 const router = express.Router();
 
@@ -41,6 +42,9 @@ router.get('/:id', async (req, res) => {
   try {
     const bug = await prisma.bug.findUnique({
       where: { id: req.params.id },
+      include: {
+        attachments: { orderBy: { uploadedAt: 'asc' } },
+      },
     });
 
     if (!bug) {
@@ -162,6 +166,19 @@ router.patch('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
+    const attachments = await prisma.attachment.findMany({
+      where: { bugId: req.params.id },
+      select: { storageKey: true },
+    });
+
+    if (attachments.length > 0) {
+      try {
+        await storage.deleteFiles(attachments.map((a) => a.storageKey));
+      } catch (storageErr) {
+        console.error(`Storage cleanup failed for bug ${req.params.id}:`, storageErr);
+      }
+    }
+
     await prisma.bug.delete({
       where: { id: req.params.id },
     });
